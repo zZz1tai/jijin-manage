@@ -17,8 +17,8 @@ import { Swipeable } from 'react-native-gesture-handler';
 type SortKey = 'market_value' | 'pnl' | 'pnl_pct' | 'name';
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   card: '#FFFFFF',
   border: '#E6EEF8',
   borderSoft: '#EEF2F7',

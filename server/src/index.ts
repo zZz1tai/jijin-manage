@@ -164,7 +164,7 @@ app.get("/api/v1/search-instruments", async (req, res) => {
       input: keyword,
       type: "14",
       token: EASTMONEY_SEARCH_TOKEN,
-      count: "30",
+      count: "100",
     });
     const response = await fetchWithTimeout(`${EASTMONEY_SEARCH_URL}?${params.toString()}`, {
       headers: {
@@ -378,6 +378,7 @@ function inferInstrumentType(code: string, raw?: Record<string, unknown>): Instr
 
   if (isOtcFund || mktNum === "113") return "fund_open";
   if (typeName.includes("\u6307\u6570") || securityType === "11" || classify.includes("INDEX")) return "index";
+  if (classify === "ASTOCK" || marketType === "1" || ["\u6caaA", "\u6df1A", "\u4eacA"].some(label => typeName.includes(label))) return "stock";
   if (classify.includes("USSTOCK") || typeName.includes("\u7f8e\u80a1") || marketType === "7" || ["105", "106", "107"].includes(mktNum)) return "stock_us";
   if (classify === "HK" || exchange === "HK" || typeName.includes("\u6e2f\u80a1") || marketType === "5" || mktNum === "116") return "stock_hk";
   if (quoteMarket && !["0", "1", "113", "150"].includes(quoteMarket)) return "stock_global";
@@ -1153,15 +1154,19 @@ async function fetchHotList(period: HotListPeriod, page: number, pageSize: numbe
     if (!response.ok) {
       throw new Error(`Tonghuashun hot list failed: ${response.status}`);
     }
-    const items = normalizeHotListPayload(parseJsonOrJsonp(await response.text()));
-    const quotes = await fetchSinaQuotes(items.map(item => ({ code: item.code, type: "stock" })));
+    const items = normalizeHotListPayload(parseJsonOrJsonp(await response.text()))
+      .slice((page - 1) * pageSize, page * pageSize);
+    const quotes = await Promise.race([
+      fetchSinaQuotes(items.map(item => ({ code: item.code, type: "stock" }))),
+      new Promise<QuoteItem[]>(resolve => setTimeout(() => resolve([]), 1800)),
+    ]);
     const quoteMap = new Map(quotes.map(quote => [quote.code, quote]));
     return items
       .map(item => {
         const quote = quoteMap.get(item.code);
-        return quote ? { ...item, price: quote.price, change_pct: quote.change_pct } : item;
-      })
-      .slice((page - 1) * pageSize, page * pageSize);
+        const hasValidQuote = quote && quote.price > 0 && quote.change_pct > -99;
+        return hasValidQuote ? { ...item, price: quote.price, change_pct: quote.change_pct } : item;
+      });
   } catch (error) {
     console.warn("Hot list fetch failed:", error);
     return [];
@@ -1222,15 +1227,15 @@ async function fetchTonghuashunIndexPage(
 
 async function fetchMarketIndices(page: number, pageSize: number, sort: MarketBoardSort): Promise<MarketIndexItem[]> {
   try {
-    const firstPage = await fetchTonghuashunIndexPage(1, sort);
-    const pageCount = firstPage.pageCount;
-    const tailPages = await Promise.all(
-      Array.from({ length: Math.max(0, pageCount - 1) }, (_, index) =>
-        fetchTonghuashunIndexPage(index + 2, sort).catch(() => ({ items: [], pageCount })),
+    const startPage = Math.max(1, Math.floor(((page - 1) * pageSize) / 50) + 1);
+    const endPage = Math.max(startPage, Math.ceil((page * pageSize) / 50));
+    const pages = await Promise.all(
+      Array.from({ length: endPage - startPage + 1 }, (_, index) =>
+        fetchTonghuashunIndexPage(startPage + index, sort).catch(() => ({ items: [], pageCount: endPage })),
       ),
     );
     const seen = new Set<string>();
-    const items = [firstPage, ...tailPages]
+    const items = pages
       .flatMap(result => result.items)
       .filter(item => {
         if (seen.has(item.code)) return false;
@@ -1238,7 +1243,7 @@ async function fetchMarketIndices(page: number, pageSize: number, sort: MarketBo
         return true;
       })
       .sort((a, b) => sort === "loss" ? a.change_pct - b.change_pct : b.change_pct - a.change_pct);
-    return items.slice((page - 1) * pageSize, page * pageSize);
+    return items.slice(0, pageSize);
   } catch (error) {
     console.warn("Market indices fetch failed:", error);
     return [];

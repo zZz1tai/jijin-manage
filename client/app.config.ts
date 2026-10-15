@@ -80,6 +80,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-sqlite',
     ],
+    extra: {
+      ...config.extra,
+      eas: {
+        projectId: '10912a12-7295-484d-8816-6351543b8404',
+      },
+    },
     experiments: {
       typedRoutes: true,
     },

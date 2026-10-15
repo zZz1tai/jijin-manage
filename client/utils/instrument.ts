@@ -55,7 +55,7 @@ export function getInstrumentTypeColor(type: InstrumentType | string): string {
     case 'index':
       return '#10B981';
     case 'fund_etf':
-      return '#1677FF';
+      return '#1D4ED8';
     case 'fund_open':
       return '#F59E0B';
     default:

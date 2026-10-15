@@ -15,8 +15,8 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   card: '#FFFFFF',
   border: '#E6EEF8',
   text: '#0F172A',
@@ -96,8 +96,7 @@ export default function MarketScreen() {
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<'watchlist' | 'boards' | 'hot' | 'indices'>('watchlist');
-  const [boardCategory, setBoardCategory] = useState<MarketBoardCategory>('industry');
+  const [viewMode, setViewMode] = useState<'watchlist' | 'industry' | 'concept' | 'hot' | 'indices'>('watchlist');
   const [boardSort, setBoardSort] = useState<MarketBoardSort>('gain');
   const [boards, setBoards] = useState<MarketBoardItem[]>([]);
   const [boardsLoading, setBoardsLoading] = useState(false);
@@ -120,9 +119,11 @@ export default function MarketScreen() {
   const [editingName, setEditingName] = useState<Instrument | null>(null);
   const [nameDraft, setNameDraft] = useState('');
   const [deletingInstrument, setDeletingInstrument] = useState<Instrument | null>(null);
+  const isBoardView = viewMode === 'industry' || viewMode === 'concept';
+  const activeBoardCategory: MarketBoardCategory = viewMode === 'concept' ? 'concept' : 'industry';
 
   const loadBoards = useCallback(async (
-    category = boardCategory,
+    category = activeBoardCategory,
     page = 1,
     mode: BoardLoadMode = 'replace',
     options: BoardLoadOptions = {},
@@ -163,7 +164,7 @@ export default function MarketScreen() {
         setBoardsLoading(false);
       }
     }
-  }, [boardCategory, boardSort]);
+  }, [activeBoardCategory, boardSort]);
 
   const loadHotItems = useCallback(async (period = hotPeriod, options: { silent?: boolean } = {}) => {
     if (!options.silent) setHotLoading(true);
@@ -213,37 +214,40 @@ export default function MarketScreen() {
   useFocusEffect(useCallback(() => { loadData(false); }, [loadData, refreshTrigger]));
 
   useEffect(() => {
+    if (!isBoardView) return;
     boardLoadMoreInFlightRef.current = false;
     setBoardPage(1);
     setBoardsHasMore(true);
     setBoards([]);
-    loadBoards(boardCategory, 1, 'replace', {}, boardSort);
-  }, [boardCategory, boardSort, loadBoards]);
+    loadBoards(activeBoardCategory, 1, 'replace', {}, boardSort);
+  }, [activeBoardCategory, boardSort, isBoardView, loadBoards]);
 
   useEffect(() => {
+    if (viewMode !== 'hot') return;
     setHotItems([]);
     loadHotItems(hotPeriod);
-  }, [hotPeriod, loadHotItems]);
+  }, [hotPeriod, loadHotItems, viewMode]);
 
   useEffect(() => {
+    if (viewMode !== 'indices') return;
     setIndices([]);
     loadIndices(indexSort);
-  }, [indexSort, loadIndices]);
+  }, [indexSort, loadIndices, viewMode]);
 
   const loadMoreBoards = useCallback(() => {
     if (boardsLoading || boardsLoadingMore || boardLoadMoreInFlightRef.current || !boardsHasMore) return;
     boardLoadMoreInFlightRef.current = true;
-    void loadBoards(boardCategory, boardPage + 1, 'append', {}, boardSort).finally(() => {
+    void loadBoards(activeBoardCategory, boardPage + 1, 'append', {}, boardSort).finally(() => {
       boardLoadMoreInFlightRef.current = false;
     });
-  }, [boardCategory, boardPage, boardSort, boardsHasMore, boardsLoading, boardsLoadingMore, loadBoards]);
+  }, [activeBoardCategory, boardPage, boardSort, boardsHasMore, boardsLoading, boardsLoadingMore, loadBoards]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     Haptics.selectionAsync();
     try {
-      if (viewMode === 'boards') {
-        await loadBoards(boardCategory, 1, 'replace', {}, boardSort);
+      if (isBoardView) {
+        await loadBoards(activeBoardCategory, 1, 'replace', {}, boardSort);
         return;
       }
       if (viewMode === 'hot') {
@@ -258,14 +262,14 @@ export default function MarketScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [boardCategory, boardSort, hotPeriod, indexSort, loadBoards, loadData, loadHotItems, loadIndices, viewMode]);
+  }, [activeBoardCategory, boardSort, hotPeriod, indexSort, isBoardView, loadBoards, loadData, loadHotItems, loadIndices, viewMode]);
 
   useFocusEffect(useCallback(() => {
     const timer = setInterval(() => {
       if (autoRefreshInFlightRef.current) return;
       autoRefreshInFlightRef.current = true;
-      const task = viewMode === 'boards'
-        ? loadBoards(boardCategory, 1, 'replace', { silent: true, preserveLoaded: true }, boardSort)
+      const task = isBoardView
+        ? loadBoards(activeBoardCategory, 1, 'replace', { silent: true, preserveLoaded: true }, boardSort)
         : viewMode === 'hot'
           ? loadHotItems(hotPeriod, { silent: true })
           : viewMode === 'indices'
@@ -277,7 +281,7 @@ export default function MarketScreen() {
     }, MARKET_AUTO_REFRESH_MS);
 
     return () => clearInterval(timer);
-  }, [boardCategory, boardSort, hotPeriod, indexSort, loadBoards, loadData, loadHotItems, loadIndices, viewMode]));
+  }, [activeBoardCategory, boardSort, hotPeriod, indexSort, isBoardView, loadBoards, loadData, loadHotItems, loadIndices, viewMode]));
 
   const groups = Array.from(new Set(instruments.map(i => i.group_name?.trim()).filter(Boolean))) as string[];
   const filtered = instruments.filter(item => {
@@ -384,7 +388,8 @@ export default function MarketScreen() {
         <View className="flex-row p-1 rounded-full mb-3" style={{ backgroundColor: UI.primarySoft, borderColor: UI.border, borderWidth: 1 }}>
           {[
             { k: 'watchlist', label: '自选' },
-            { k: 'boards', label: '板块榜' },
+            { k: 'industry', label: '行业榜' },
+            { k: 'concept', label: '概念榜' },
             { k: 'indices', label: '指数榜' },
             { k: 'hot', label: '热门榜' },
           ].map(tab => (
@@ -392,7 +397,7 @@ export default function MarketScreen() {
               key={tab.k}
               className="flex-1 py-2 rounded-full items-center"
               style={{ backgroundColor: viewMode === tab.k ? UI.primary : 'transparent' }}
-              onPress={() => { setViewMode(tab.k as 'watchlist' | 'boards' | 'hot' | 'indices'); Haptics.selectionAsync(); }}
+              onPress={() => { setViewMode(tab.k as 'watchlist' | 'industry' | 'concept' | 'hot' | 'indices'); Haptics.selectionAsync(); }}
             >
               <Text className="text-sm font-semibold" style={{ color: viewMode === tab.k ? '#fff' : UI.primary }}>{tab.label}</Text>
             </TouchableOpacity>
@@ -445,33 +450,9 @@ export default function MarketScreen() {
           ))}
             </View>
           </>
-        ) : viewMode === 'boards' ? (
+        ) : isBoardView ? (
           <View className="gap-2">
             <View className="flex-row items-center justify-between gap-2">
-            <View className="flex-row gap-2">
-              {[
-                { k: 'industry', label: '行业' },
-                { k: 'concept', label: '概念' },
-              ].map(category => (
-                <TouchableOpacity
-                  key={category.k}
-                  className="px-3 py-1.5 rounded-full"
-                  style={{
-                    backgroundColor: boardCategory === category.k ? UI.primary : UI.card,
-                    borderColor: boardCategory === category.k ? UI.primary : UI.border,
-                    borderWidth: 1,
-                  }}
-                  onPress={() => { setBoardCategory(category.k as MarketBoardCategory); Haptics.selectionAsync(); }}
-                >
-                  <Text className="text-xs font-medium" style={{ color: boardCategory === category.k ? '#fff' : UI.subText }}>{category.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View className="flex-row items-center">
-              <View className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isTradingHours() ? 'bg-[#22C55E]' : 'bg-[#64748B]'}`} />
-              <Text className="text-xs" style={{ color: UI.subText }}>{isTradingHours() ? '交易中' : '休市'}</Text>
-            </View>
-            </View>
             <View className="flex-row gap-2">
               {[
                 { k: 'gain', label: '涨幅' },
@@ -490,6 +471,11 @@ export default function MarketScreen() {
                   <Text className="text-xs font-medium" style={{ color: boardSort === sort.k ? '#fff' : UI.subText }}>{sort.label}</Text>
                 </TouchableOpacity>
               ))}
+            </View>
+            <View className="flex-row items-center">
+              <View className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isTradingHours() ? 'bg-[#22C55E]' : 'bg-[#64748B]'}`} />
+              <Text className="text-xs" style={{ color: UI.subText }}>{isTradingHours() ? '交易中' : '休市'}</Text>
+            </View>
             </View>
           </View>
         ) : viewMode === 'indices' ? (
@@ -551,7 +537,7 @@ export default function MarketScreen() {
         )}
       </View>
 
-      {viewMode === 'boards' ? (
+      {isBoardView ? (
         boardsLoading && boards.length === 0 ? (
           <View className="py-10 items-center">
             <ActivityIndicator color={UI.primary} />
@@ -666,8 +652,9 @@ export default function MarketScreen() {
             renderItem={({ item, index }) => {
               const rankChange = item.rank_change ?? 0;
               const rankColor = rankChange > 0 ? '#EF4444' : rankChange < 0 ? '#22C55E' : UI.subText;
+              const hasChangePct = typeof item.change_pct === 'number';
               const changePct = item.change_pct ?? 0;
-              const changeColor = getPnlColor(changePct, reversed);
+              const changeColor = hasChangePct ? getPnlColor(changePct, reversed) : UI.primary;
               const tags = [item.popularity_tag, ...(item.concept_tags ?? [])].filter(Boolean).slice(0, 3);
               return (
                 <View className="rounded-2xl p-4 mb-2 flex-row items-center justify-between" style={CARD_STYLE}>
@@ -684,7 +671,7 @@ export default function MarketScreen() {
                     ) : null}
                   </View>
                   <View className="items-end px-3 py-2 rounded-lg" style={{ backgroundColor: `${changeColor}20`, minWidth: 86 }}>
-                    <Text className="text-sm font-bold" style={{ color: changeColor, fontVariant: ['tabular-nums'] }}>{formatPercent(changePct)}</Text>
+                    <Text className="text-sm font-bold" style={{ color: changeColor, fontVariant: ['tabular-nums'] }}>{hasChangePct ? formatPercent(changePct) : '--'}</Text>
                     <Text className="text-xs mt-0.5" style={{ color: UI.subText }}>{formatHeat(item.heat)}</Text>
                     {rankChange !== 0 ? (
                       <Text className="text-[10px] mt-0.5" style={{ color: rankColor }}>

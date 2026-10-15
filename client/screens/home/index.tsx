@@ -14,6 +14,7 @@ import { getInstrumentTypeColor, getInstrumentTypeLabel } from '@/utils/instrume
 import { LineChart, PieChart } from 'react-native-gifted-charts';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type Period = 'day' | 'week' | 'month' | 'year' | 'all';
 
@@ -35,8 +36,8 @@ const EMPTY_SUMMARY = {
 };
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   card: '#FFFFFF',
   cardSoft: '#F8FAFF',
   border: '#E6EEF8',
@@ -219,7 +220,12 @@ export default function HomeScreen() {
       >
         {/* 顶部总览卡 */}
         <View className="px-4 pt-4">
-          <View className="rounded-3xl p-5 overflow-hidden" style={{ backgroundColor: UI.primary }}>
+          <LinearGradient
+            colors={['#0F172A', '#1E40AF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 24, padding: 20, overflow: 'hidden' }}
+          >
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-xs text-white/80">总资产 (CNY)</Text>
               <View className="px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}>
@@ -261,7 +267,7 @@ export default function HomeScreen() {
                 <Text className="text-xs text-white font-semibold">记交易</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </LinearGradient>
 
           {/* 资产分布 */}
           <View className="flex-row mt-3 gap-2">

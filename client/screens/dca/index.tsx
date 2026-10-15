@@ -16,8 +16,8 @@ import * as Haptics from 'expo-haptics';
 import { Alert } from 'react-native';
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   gold: '#F59E0B',
   goldSoft: '#FFF7E6',
   card: '#FFFFFF',

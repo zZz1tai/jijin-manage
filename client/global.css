@@ -47,7 +47,7 @@ textarea:focus {
   :root {
     @variant light {
       /* Base Colors */
-      --background: #F5F7FB;
+      --background: #F3F6FA;
       --foreground: #0F172A;
 
       /* Surface: Used for non-overlay components (cards, accordions, disclosure groups) */
@@ -63,7 +63,7 @@ textarea:focus {
       --default: #EEF4FF;
       --default-foreground: #0F172A;
 
-      --accent: #1677FF;
+      --accent: #1D4ED8;
       --accent-foreground: var(--snow);
 
       /* Form Fields */
@@ -87,8 +87,8 @@ textarea:focus {
       --segment-foreground: #0F172A;
 
       /* Misc Colors */
-      --border: #E6EEF8;
-      --separator: #D7E3F3;
+      --border: #E2E8F0;
+      --separator: #CBD5E1;
       --focus: var(--accent);
       --link: var(--foreground);
 
@@ -169,7 +169,7 @@ textarea:focus {
   --color-gold: #F59E0B;      /* 金色-收益 */
   --color-navy: #0B0E14;      /* 深色背景 */
   --color-card: #161B28;      /* 卡片深色 */
-  --color-bright-blue: #1677FF; /* 强调蓝 */
+  --color-bright-blue: #1D4ED8; /* 强调蓝 */
 
   --color-surface: var(--surface);
   --color-surface-foreground: var(--surface-foreground);

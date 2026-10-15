@@ -6,6 +6,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Keyboard,
+  StatusBar as RNStatusBar,
   ViewStyle,
   FlatList,
   SectionList,
@@ -20,6 +21,8 @@ import {
   KeyboardAwareFlatList,
   KeyboardAwareSectionList
 } from 'react-native-keyboard-aware-scroll-view';
+
+const TOP_SAFE_GAP = 8;
 
 /**
  * # Screen 组件使用指南
@@ -199,10 +202,15 @@ const RawScreen = ({
   // 强制禁用 iOS 自动调整内容区域，完全由手动 padding 控制，消除系统自动计算带来的多余空白
   const contentInsetBehaviorIOS = 'never';
 
+  const topInset = Math.max(
+    insets.top,
+    Platform.OS === 'android' ? RNStatusBar.currentHeight ?? 0 : 0
+  );
+
   const wrapperStyle: ViewStyle = {
     flex: 1,
     backgroundColor,
-    paddingTop: hasTop ? insets.top : 0,
+    paddingTop: hasTop ? topInset + TOP_SAFE_GAP : 0,
     paddingLeft: hasLeft ? insets.left : 0,
     paddingRight: hasRight ? insets.right : 0,
     // 当页面不使用外层 ScrollView 时（子树本身可滚动），由外层 View 负责底部安全区

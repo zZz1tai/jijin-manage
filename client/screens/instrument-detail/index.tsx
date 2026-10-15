@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, useWindowDimensions, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useSafeRouter, useSafeSearchParams } from '@/hooks/useSafeRouter';
@@ -40,8 +40,8 @@ const ALERT_META: Record<AlertType, { label: string; unit: string }> = {
 };
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   card: '#FFFFFF',
   input: '#F7FAFF',
   border: '#E6EEF8',

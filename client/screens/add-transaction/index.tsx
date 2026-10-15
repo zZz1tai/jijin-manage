@@ -15,8 +15,8 @@ import * as Haptics from 'expo-haptics';
 import Toast from 'react-native-toast-message';
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   page: '#F5F7FB',
   card: '#FFFFFF',
   input: '#F7FAFF',

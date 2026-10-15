@@ -22,8 +22,8 @@ const {
 } = SETTING_KEYS;
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   card: '#FFFFFF',
   input: '#F5F8FF',
   border: '#E6EEF8',

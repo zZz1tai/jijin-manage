@@ -83,7 +83,10 @@ export type MarketIndexItem = {
   amount: number;
 };
 
-const LOCAL_API_BASE = '/api/v1';
+// Web 端使用当前站点代理；原生端必须使用可访问的后端绝对地址。
+// APK 中不存在网页的 origin，直接请求 `/api/v1` 会落到无效地址。
+const BACKEND_BASE_URL = (process.env.EXPO_PUBLIC_BACKEND_BASE_URL ?? '').replace(/\/$/, '');
+const LOCAL_API_BASE = `${BACKEND_BASE_URL}/api/v1`;
 const EASTMONEY_FUND_NAV_URL = 'https://api.fund.eastmoney.com/f10/lsjz';
 const EASTMONEY_BOARD_LIST_URL = 'https://push2.eastmoney.com/api/qt/clist/get';
 const EASTMONEY_BOARD_HISTORY_URL = 'https://push2his.eastmoney.com/api/qt/stock/kline/get';
@@ -122,7 +125,7 @@ const COMMON_FUZZY_ITEMS: FuzzySearchItem[] = [
 ];
 
 function shouldUseLocalApi(): boolean {
-  return Platform.OS === 'web';
+  return Platform.OS === 'web' || Boolean(BACKEND_BASE_URL);
 }
 
 async function fetchWithTimeout(
@@ -376,6 +379,7 @@ function inferInstrumentType(code: string, raw?: Record<string, unknown>): Instr
 
   if (isOtcFund || mktNum === '113') return 'fund_open';
   if (typeName.includes('指数') || securityType === '11' || classify.includes('INDEX')) return 'index';
+  if (classify === 'ASTOCK' || marketType === '1' || ['沪A', '深A', '京A'].some(label => typeName.includes(label))) return 'stock';
   if (classify.includes('USSTOCK') || typeName.includes('美股') || marketType === '7' || ['105', '106', '107'].includes(mktNum)) return 'stock_us';
   if (classify === 'HK' || exchange === 'HK' || typeName.includes('港股') || marketType === '5' || mktNum === '116') return 'stock_hk';
   if (quoteMarket && !['0', '1', '113', '150'].includes(quoteMarket)) return 'stock_global';
@@ -757,6 +761,11 @@ export async function fetchMarketIndices(
   const normalizedPage = Math.max(1, Math.round(page));
   const normalizedPageSize = Math.max(1, Math.min(Math.round(pageSize), 100));
 
+  if (!shouldUseLocalApi()) {
+    console.warn('指数榜不可用：请在 APK 构建时配置 EXPO_PUBLIC_BACKEND_BASE_URL');
+    return [];
+  }
+
   try {
     const params = new URLSearchParams({
       page: String(normalizedPage),
@@ -1132,7 +1141,7 @@ async function searchInstrumentsFromLocalApi(keyword: string): Promise<SearchRes
 
 async function searchInstrumentsFromEastmoney(keyword: string): Promise<SearchResult[]> {
   try {
-    const url = `https://searchapi.eastmoney.com/api/suggest/get?input=${encodeURIComponent(keyword)}&type=14&token=D43BF722C8E33BDC906FB84D85E326E8&count=30`;
+    const url = `https://searchapi.eastmoney.com/api/suggest/get?input=${encodeURIComponent(keyword)}&type=14&token=D43BF722C8E33BDC906FB84D85E326E8&count=100`;
     const resp = await fetchWithTimeout(url);
     if (!resp.ok) throw new Error(`eastmoney search failed: ${resp.status}`);
     return normalizeSearchPayload(await resp.json());

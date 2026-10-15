@@ -21,7 +21,7 @@ export default function TabLayout() {
     paddingBottom: Math.max(insets.bottom, 10),
     paddingTop: 9,
     height: Platform.OS === 'web' ? 'auto' as const : 56 + Math.max(insets.bottom, 8),
-    shadowColor: '#1677FF',
+    shadowColor: '#1D4ED8',
     shadowOpacity: 0.08,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: -6 },
@@ -37,7 +37,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle,
-        tabBarActiveTintColor: accent || '#1677FF',
+        tabBarActiveTintColor: accent || '#1D4ED8',
         tabBarInactiveTintColor: muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' as const },
         tabBarItemStyle: { minWidth: 0 },

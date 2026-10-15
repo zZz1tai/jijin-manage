@@ -17,8 +17,8 @@ import Toast from 'react-native-toast-message';
 type CostMode = 'cost_price' | 'cost_amount';
 
 const UI = {
-  primary: '#1677FF',
-  primarySoft: '#EAF3FF',
+  primary: '#1D4ED8',
+  primarySoft: '#EAF0FF',
   card: '#FFFFFF',
   input: '#F7FAFF',
   border: '#E6EEF8',
